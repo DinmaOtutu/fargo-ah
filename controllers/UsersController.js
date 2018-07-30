@@ -50,7 +50,7 @@ export default class UsersController {
   }
 
   /**
-   * Checks if the user exists and returns a JWT token
+   * Checks if the user exists and returns JWT token
    * @param {*} req - request object
    * @param {*} res - response object
    * @param {*} next - Next function

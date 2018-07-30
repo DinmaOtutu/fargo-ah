@@ -10,6 +10,8 @@ import morgan from 'morgan';
 import debugLog from 'debug';
 import expressValidator from 'express-validator';
 import { } from 'dotenv/config';
+import cloudinary from 'cloudinary';
+import config from './config';
 
 import passportConfig from './config/passport';
 import routes from './routes';
