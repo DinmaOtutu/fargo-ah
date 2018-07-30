@@ -14,7 +14,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
     },
     body: {
-      type: DataTypes.TEXT,
+      type: DataTypes.STRING,
       allowNull: false,
     },
     updatedCount: DataTypes.INTEGER,
@@ -27,6 +27,16 @@ module.exports = (sequelize, DataTypes) => {
   Article.associate = (models) => {
     // associations can be defined here
 
+    Article.belongsTo(models.User, {
+      foreignKey: 'userId',
+      onDelete: 'CASCADE',
+    });
+
+    Article.hasMany(models.Comment, {
+      foreignKey: 'articleId',
+      as: 'comments',
+    });
+
     Article.belongsTo(
       models.User,
       {
@@ -34,7 +44,10 @@ module.exports = (sequelize, DataTypes) => {
         onDelete: 'CASCADE',
       }
     );
+    Article.hasMany(models.Like, {
+      foreignKey: 'articleId',
+      as: 'likes',
+    });
   };
-
   return Article;
 };

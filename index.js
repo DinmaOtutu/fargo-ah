@@ -1,17 +1,20 @@
+import expressValidator from 'express-validator';
 import path from 'path';
 import express from 'express';
 import bodyParser from 'body-parser';
+import cloudinary from 'cloudinary';
 import session from 'express-session';
 import passport from 'passport';
 import cors from 'cors';
+import { } from 'dotenv/config';
 import errorhandler from 'errorhandler';
 import methodOverride from 'method-override';
 import morgan from 'morgan';
 import debugLog from 'debug';
-import expressValidator from 'express-validator';
 
-import { } from 'dotenv/config';
 import passportConfig from './config/passport';
+import config from './config';
+
 import routes from './routes';
 
 const isProduction = process.env.NODE_ENV === 'production';
@@ -26,6 +29,15 @@ passport.deserializeUser(((user, done) => {
 
 // Create global app object
 const app = express();
+passportConfig(app);
+
+/** configure cloudinary to be able to upload image */
+cloudinary.config({
+  cloud_name: config.cloudinary.cloud_name,
+  api_key: config.cloudinary.api_key,
+  api_secret: config.cloudinary.api_secret,
+});
+
 passportConfig(app);
 app.use(cors());
 

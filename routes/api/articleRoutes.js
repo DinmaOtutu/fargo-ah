@@ -18,5 +18,6 @@ router.delete('/articles/:slug', verifyToken, articleExists, ArticleControllers.
 router.get('/articles/:slug', ArticleControllers.getArticle);
 
 router.get('/articles', ArticleControllers.listAllArticles);
+router.post('/articles/:slug/like', verifyToken, ArticleControllers.likeArticle);
 
 export default router;

@@ -2,9 +2,15 @@ import db from '../models';
 
 const { User } = db;
 const getUser = (req, res, next) => {
-  User.findById(req.userId)
+  let whereField = {};
+  if (req.params.username) {
+    whereField = { username: req.params.username };
+  } else {
+    whereField = { id: req.userId };
+  }
+  User.find({ where: whereField })
     .then((user) => {
-      if (!user || user.rowCount === 0) {
+      if (!user) {
         return res.status(404).json({
           success: false,
           errors: {

@@ -1,7 +1,8 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { Op } from 'sequelize';
-import db from '../models';
+// import db from '../models';
+import { User, Follow } from '../models';
 import utils from '../helpers/utilities';
 import sendVerificationEmail from '../helpers/sendmail';
 
@@ -22,13 +23,13 @@ export default class UsersController {
       if (err) {
         return next(err);
       }
-      db.User.find({
+      User.find({
         where: {
           [Op.or]: [{ email }, { username }],
         },
       }).then((user) => {
         if (!user) {
-          db.User.create({
+          User.create({
             email,
             username,
             hashedPassword: hash,
@@ -58,7 +59,7 @@ export default class UsersController {
    */
   static login(req, res, next) {
     const { email, password } = req.body.user;
-    db.User.find({
+    User.find({
       where: { email }
     }).then((foundUser) => {
       if (foundUser) {
@@ -97,10 +98,10 @@ export default class UsersController {
   * @param {*} next - Incase of errors
   * @returns {object} An object containing all the data related to the user
   */
-  static getProfile(req, res, next) {
-    db.User.findOne({ where: { username: req.params.username } })
+  static getProfile(req, res) {
+    User.findOne({ where: { username: req.params.username } })
       .then((user) => {
-        if (!user || user.rowCount < 1) {
+        if (!user) {
           return res.status(404).json({
             success: false,
             errors: {
@@ -109,8 +110,7 @@ export default class UsersController {
           });
         }
         return res.status(200).json(utils.userToJson(user));
-      })
-      .catch(next);
+      });
   }
 
   /**
@@ -123,7 +123,7 @@ export default class UsersController {
   */
   static editProfile(req, res, next) {
     const { username, image, bio } = req.body.user;
-    db.User.findOne({ where: { username: req.params.username } })
+    User.findOne({ where: { username: req.params.username } })
       .then((user) => {
         if (!user || user.rowCount === 0) {
           return res.status(404).json({
@@ -134,7 +134,7 @@ export default class UsersController {
           });
         }
         if (req.userId === user.id) {
-          db.User.update({
+          User.update({
             username,
             image,
             bio,
@@ -159,6 +159,140 @@ export default class UsersController {
   }
 
   /**
+  * @function follow
+  * @summary Handles the follow feature
+  * @param {object} req - Request object
+  * @param {object} res - Response object
+  * @param {*} next - Incase of errors
+  * @returns {object} An object containing all the data related to the followed user
+  */
+  static follow(req, res, next) {
+    const follow = req.userObject;
+    const { userId } = req;
+    if (userId !== follow.id) {
+      Follow.findAndCountAll({ where: { userId, followId: follow.id } })
+        .then((found) => {
+          if (!found.count) {
+            Follow.create({ userId, followId: follow.id }).then(() => {
+              res.status(200).json(utils.userToJson(follow));
+            });
+          } else {
+            res.status(400).json({
+              success: false,
+              error: {
+                body: [
+                  'Already following'
+                ],
+              },
+            });
+          }
+        }).catch(next);
+    } else {
+      res.status(400).json({
+        success: false,
+        error: {
+          body: [
+            'Come on silly, You cannot follow yourself'
+          ],
+        },
+      });
+    }
+  }
+
+
+  /**
+* @function unfollow
+* @summary Handles the unfollow feature
+* @param {object} req - Request object
+* @param {object} res - Response object
+* @param {*} next - Incase of errors
+* @returns {object} An object containing all the data related to the unfollowed user
+*/
+  static unfollow(req, res, next) {
+    const follow = req.userObject;
+    const { userId } = req;
+    Follow.destroy({
+      where: {
+        userId,
+        followId: follow.id,
+      }
+    }).then((del) => {
+      if (del) {
+        res.status(200).json(utils.userToJson(follow));
+      } else {
+        res.status(400).json({
+          success: false,
+          error: {
+            body: [
+              'You are no longer following this author'
+            ],
+          },
+        });
+      }
+    }).catch(next);
+  }
+
+
+  /**
+ * Handles the unfollow feature
+ * @param {*} req
+ * @param {*} res
+ * @returns {string} - String
+ */
+  static getAllFollowingMe(req, res) {
+    User.findAll({
+      attributes: ['id'],
+      // where: { followId: req.userId },
+      include: [{
+        model: Follow,
+        as: 'followingMe',
+        where: {
+          userId: req.userId
+        },
+        attributes: ['followId'],
+      }],
+    }).then((user) => {
+      // const following = user[0].followings;
+      res.status(200).json({
+        user,
+      });
+    }).catch((err) => {
+      throw err;
+    });
+  }
+
+
+  /**
+ * Handles the unfollow feature
+ * @param {*} req
+ * @param {*} res
+ * @returns {string} - String
+ */
+  static getAllMyFollower(req, res) {
+    Follow.findAll({
+      where: { followId: req.userId },
+      include: [{
+        model: User,
+        as: 'myFollowers',
+        attributes: ['id', 'email', 'username'],
+      }],
+      attributes: { exclude: ['id', 'userId', 'followId', 'createdAt', 'updatedAt'] }
+    }).then((user) => {
+      if (user.length === 0) {
+        return res.status(200).json({
+          message: 'No followers yet'
+        });
+      }
+      res.status(200).json({
+        user
+      });
+    }).catch((err) => {
+      throw err;
+    });
+  }
+
+
+  /**
    * Verify the email sent to the newly registered user
    * @param {*} req - request object
    * @param {*} res - response object
@@ -168,7 +302,7 @@ export default class UsersController {
     const { token } = req.params;
     try {
       const decodedUserData = jwt.verify(token, process.env.SECRETE_KEY);
-      const userFound = await db.User.findOne({ where: { id: decodedUserData.id } });
+      const userFound = await User.findOne({ where: { id: decodedUserData.id } });
       if (userFound) {
         if (userFound.isverified) {
           return res.status(400).json({
@@ -179,7 +313,7 @@ export default class UsersController {
           });
         }
       }
-      db.User.update(
+      User.update(
         { isverified: true },
         { where: { id: decodedUserData.id } }
       );

@@ -1,6 +1,6 @@
 import cloudinary from '../config/cloudinary';
 import Utilities from '../helpers/utilities';
-import { Article, User } from '../models';
+import { Article, User, Like } from '../models';
 import createArticleHelper from '../helpers/createArticleHelper';
 
 /**
@@ -157,6 +157,74 @@ class ArticleController {
     })
       .then(() => res.status(200).json({ message: 'Article successfully deleted' }))
       .catch(next);
+  }
+
+  /**
+ * @function likeArticle
+* @summary: API controller to handle requests
+* to like an article
+* @param {object} req: request object
+* @param {object} res: response object
+* @returns {object} api response: article object for
+* successful requests, or error object for
+* requests that fail
+*/
+  static likeArticle(req, res) {
+    const { userId } = req;
+
+    const { slug } = req.params;
+    let articleId;
+    let likesCount = null;
+    Article.findOne({
+      where: { slug }
+    })
+      .then((article) => {
+        if (!article) {
+          return res.status(404).json({
+            errors: {
+              body: [
+                'Ooops! the article cannot be found.'
+              ]
+            }
+          });
+        }
+        articleId = article.id;
+        Like.findAndCountAll({
+          where: {
+            articleId
+          }
+        }).then((foundArticle) => {
+          likesCount = foundArticle.count + 1;
+        });
+        Like.findOrCreate({
+          where: {
+            userId, articleId
+          }
+        })
+          .spread((newOrFoundArticle, created) => {
+            if (!created) {
+              return res.status(409).json({
+                success: 'false',
+                message: 'sorry, you cannot like an article twice',
+              });
+            }
+            res.status(201).json({
+              success: 'true',
+              message: 'you successfully liked this article',
+              article: {
+                id: article.id,
+                title: article.title,
+                description: article.description,
+                body: article.body,
+                userid: article.userid,
+                likeCount: likesCount,
+                createdAt: article.createdAt,
+                updatedAt: article.updatedAt
+              }
+
+            });
+          });
+      });
   }
 }
 

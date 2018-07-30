@@ -3,6 +3,7 @@ import chaiHttp from 'chai-http';
 
 import app from '../../index';
 import seedData from './seed/seed';
+import sendEmail from '../../helpers/sendEmail';
 
 chai.use(chaiHttp);
 const {
@@ -13,9 +14,12 @@ const {
   dataWithNoBody,
   editedArticle,
 } = seedData;
+
 let validToken, createdArticle;
 
+
 describe('Articles API endpoints', () => {
+  let articleSlug;
   it('Should get an empty array for no articles', (done) => {
     chai.request(app)
       .get('/api/articles')
@@ -67,6 +71,7 @@ describe('Articles API endpoints', () => {
       .send(validArticleData)
       .end((err, res) => {
         createdArticle = res.body.article;
+        articleSlug = createdArticle.slug;
         expect(res).to.have.status(201);
         expect(res.body).to.be.an('object').to.have.property('article');
         expect(createdArticle).to.be.an('object').to.have.property('slug');
@@ -80,6 +85,18 @@ describe('Articles API endpoints', () => {
         expect(createdArticle.User).to.have.property('image');
         done();
       });
+  });
+
+  it('should send an email if valid email is provided', (done) => {
+    const emailData = {
+      email: 'rossidiuebr@gmail.com',
+      slug: articleSlug,
+      name: 'Nwanna'
+    };
+    sendEmail(emailData.email, emailData.name, emailData.slug, (callback) => {
+      expect(callback).to.equal('Mail address not found');
+      done();
+    });
   });
 
   it('Should not create article with missing title field for authenticated user', (done) => {
@@ -223,7 +240,7 @@ describe('Articles API endpoints', () => {
       });
   });
 
-  it('Should update count to 1 after updating an article', (done) => {
+  it('Should update count to 2 after updating an article twice', (done) => {
     chai.request(app)
       .put(`/api/articles/${createdArticle.slug}`)
       .set('authorization', `Bearer ${validToken}`)
@@ -235,7 +252,7 @@ describe('Articles API endpoints', () => {
       });
   });
 
-  it('Should update count to 2 after updating an article', (done) => {
+  it('Should update count to 3 after updating an article three times', (done) => {
     chai.request(app)
       .put(`/api/articles/${createdArticle.slug}`)
       .set('authorization', `Bearer ${validToken}`)
@@ -255,6 +272,46 @@ describe('Articles API endpoints', () => {
       .end((err, res) => {
         expect(res).to.have.status(403);
         expect(res.body.errors.body).to.be.an('array');
+        done();
+      });
+  });
+  it('Should not allow a user like an article that is not available', (done) => {
+    chai.request(app)
+      .post('/api/articles/hhow-to-train-your-dragon-cjk/like')
+      .set('Authorization', `Bearer ${validToken}`)
+      .end((err, res) => {
+        expect(res).to.have.status(404);
+        expect(res.body).to.be.an('object');
+        done();
+      });
+  });
+  it('Should allow a user like an article once', (done) => {
+    chai.request(app)
+      .post(`/api/articles/${createdArticle.slug}/like`)
+      .set('Authorization', `Bearer ${validToken}`)
+      .end((err, res) => {
+        expect(res).to.have.status(201);
+        expect(res.body).to.be.an('object');
+        expect(res.body).to.have.property('article');
+        expect(res.body).to.have.property('success').to.equal('true');
+        expect(res.body).to.have.property('message').to.equal('you successfully liked this article');
+        expect(res.body.article).to.have.property('id');
+        expect(res.body.article).to.have.property('title');
+        expect(res.body.article).to.have.property('likeCount');
+        expect(res.body.article).to.have.property('createdAt');
+        expect(res.body.article).to.have.property('updatedAt');
+        done();
+      });
+  });
+  it('Should not allow a user like an article twice', (done) => {
+    chai.request(app)
+      .post(`/api/articles/${createdArticle.slug}/like`)
+      .set('Authorization', `Bearer ${validToken}`)
+      .end((err, res) => {
+        expect(res).to.have.status(409);
+        expect(res.body).to.be.an('object');
+        expect(res.body).to.have.property('success').to.equal('false');
+        expect(res.body).to.have.property('message').to.equal('sorry, you cannot like an article twice');
         done();
       });
   });

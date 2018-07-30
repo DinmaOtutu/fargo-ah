@@ -1,7 +1,7 @@
 const validUser = {
   user: {
     email: 'olumide@yahoo.com',
-    username: 'Lumexat',
+    username: 'Lumexata',
     password: 'spirit2018',
   }
 };
@@ -48,6 +48,24 @@ const dataWithNoBody = {
   }
 };
 
+const validComment = {
+  comment: {
+    body: 'This is the first comment of the first level',
+  }
+};
+
+const invalidComment = {
+  comment: {
+    body: '',
+  }
+};
+
+const validReply = {
+  comment: {
+    body: 'This is the first comment of the first level',
+  }
+};
+
 export default {
   validUser,
   validArticleData,
@@ -55,4 +73,7 @@ export default {
   dataWithNoDescription,
   dataWithNoBody,
   editedArticle,
+  validComment,
+  validReply,
+  invalidComment,
 };
