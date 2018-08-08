@@ -11,10 +11,11 @@ import { Article, User } from '../models';
  */
 
 const createArticleHelper = (res, articleObject, imageUrl = null) => {
+  // articleObject.price = articleObject.price.toFixed(2);
+  articleObject.price = (articleObject.price) ? articleObject.price.toFixed(2) : undefined;
   const {
-    title, description, body, tagList, userId
+    title, description, body, tagList, userId, isPaidFor, price,
   } = articleObject;
-
   return Article
     .create({
       slug: generateUniqueSlug(title),
@@ -24,6 +25,8 @@ const createArticleHelper = (res, articleObject, imageUrl = null) => {
       userId,
       tagList,
       imageUrl,
+      isPaidFor,
+      price
     })
     .then(article => Article.findById(article.id, {
       include: [{
