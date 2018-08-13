@@ -38,10 +38,20 @@ module.exports = (sequelize, DataTypes) => {
   }, {});
 
   User.associate = (models) => {
-    User.hasMany(models.Article, {
-      foreignKey: 'userId',
-      as: 'articles',
-    });
+    User.hasMany(
+      models.Article,
+      {
+        foreignKey: 'userId',
+        as: 'articles',
+      }
+    );
+    User.hasMany(
+      models.Payment,
+      {
+        foreignKey: 'userId',
+        as: 'payments',
+      }
+    );
   };
   return User;
 };

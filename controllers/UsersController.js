@@ -118,7 +118,7 @@ export default class UsersController {
   * @summary Return a user's profile after updating it
   * @param {object} req - Request object
   * @param {object} res - Response object
-  * @param {function} next - For errors
+  * @param {function} next - for errors
   * @returns {object} An object containing all the data related to the user if update successful
   */
   static editProfile(req, res, next) {

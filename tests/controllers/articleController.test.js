@@ -208,7 +208,7 @@ describe('Articles API endpoints', () => {
         expect(res).to.have.status(404);
         expect(res.body).to.be.an('object').to.have.property('errors').to.have.property('body');
         expect(res.body.errors.body).to.be.an('array').with.lengthOf(1);
-        expect(res.body.errors.body[0]).to.equal('Ooops! the article cannot be found.');
+        expect(res.body.errors.body[0]).to.equal('The article does not exist');
         done();
       });
   });
@@ -302,6 +302,16 @@ describe('Articles API endpoints', () => {
       .end((err, res) => {
         expect(res).to.have.status(403);
         expect(res.body.errors.body).to.be.an('array');
+        done();
+      });
+  });
+  it('Should not return article if user has not bought it', (done) => {
+    chai.request(app)
+      .get(`/api/articles/${createdArticle.slug}`)
+      .set('authorization', `Bearer ${validToken}`)
+      .end((err, res) => {
+        expect(res).to.have.status(400);
+        expect(res.body).to.be.an('object');
         done();
       });
   });

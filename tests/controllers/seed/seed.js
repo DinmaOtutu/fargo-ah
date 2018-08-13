@@ -20,7 +20,9 @@ const editedArticle = {
     title: 'How to train your dragon right',
     description: 'Ever wonder how?',
     body: 'You have to believe it to achieve it',
-    tagList: ['reactjs', 'angularjs', 'dragons']
+    tagList: ['reactjs', 'angularjs', 'dragons'],
+    isPaidFor: true,
+    price: 2.30
   }
 };
 
@@ -48,6 +50,23 @@ const dataWithNoBody = {
   }
 };
 
+const paymentData = {
+  userId: 2,
+  articleId: 2,
+  amount: 400,
+  stripeToken: 'tok_1CzPWMGt81p147i69JaE0DGg',
+  stripeTokenType: 'card',
+  stripeEmail: 'rafo@gmail.com',
+};
+
+const userForPayment = {
+  user: {
+    email: 'newuser@register.com',
+    username: 'regnewuser',
+    password: 'password123',
+  }
+};
+
 export default {
   validUser,
   validArticleData,
@@ -55,4 +74,6 @@ export default {
   dataWithNoDescription,
   dataWithNoBody,
   editedArticle,
+  paymentData,
+  userForPayment,
 };

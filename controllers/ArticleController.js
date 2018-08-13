@@ -1,14 +1,16 @@
+import { Op } from 'sequelize';
+
 import cloudinary from 'cloudinary';
 import Utilities from '../helpers/utilities';
-import { Article, User } from '../models';
+import { Article, User, Payment } from '../models';
 import createArticleHelper from '../helpers/createArticleHelper';
 
 /**
-     * Article class for users
-     * @param {method} createArticle - Create article
-     * @param {method} getArticle - Get a single article
-     * @param {method} editArticle update a single article
-    */
+ * Article class for users
+ * @param {method} createArticle - Create article
+ * @param {method} getArticle - Get a single article
+ * @param {method} editArticle update a single article
+*/
 class ArticleController {
   /**
      * Create an article for a user
@@ -48,44 +50,47 @@ class ArticleController {
    * get an article using slug as query parameter
    * @param {object} req - request object
    * @param {object} res - response object
+  * @param {function} next - for errors
    * @returns {object} - the found article from database or error if not found
    */
-  static getArticle(req, res) {
-    const { slug } = req.params;
-
-    return Article
-      .findOne({
-        where: { slug, },
-        include: [{
-          model: User,
-          attributes: { exclude: ['id', 'email', 'hashedPassword', 'createdAt', 'updatedAt'] }
-        }],
-        attributes: { exclude: ['id', 'userId'] }
+  static getArticle(req, res, next) {
+    const { articleObject } = req;
+    if (articleObject.isPaidFor === true) {
+      return Payment.find({
+        where: {
+          [Op.and]: [
+            { userId: req.userId },
+            { articleId: articleObject.id }
+          ]
+        }
       })
-      .then((article) => {
-        /** if the article does not exist */
-        if (!article) {
-          return res.status(404).json({
+        .then((payment) => {
+          if (payment) {
+            return res.status(200).json({
+              article: articleObject,
+            });
+          }
+          return res.status(400).json({
             errors: {
-              body: [
-                'Ooops! the article cannot be found.'
-              ]
+              body: ['You need to purchase this article to read it']
             }
           });
-        }
-
-        return res.status(200).json({ article });
-      })
-      .catch(() => res.status(501).send('oops seems there is an error finding the article'));
+        })
+        .catch(next);
+    }
+    return res.status(200).json({
+      article: articleObject,
+    });
   }
 
   /**
    * get all articles created
    * @param {object} req - request object
    * @param {object} res - response object
+   * @param {function} next - for errors
    * @returns {object} - the found article from database or empty if not found
    */
-  static listAllArticles(req, res) {
+  static listAllArticles(req, res, next) {
     return Article
       .findAll({
         include: [{
@@ -105,7 +110,7 @@ class ArticleController {
 
         return res.status(200).json({ articles, articlesCount: articles.length });
       })
-      .catch(() => res.status(501).send('oops seems there is an error finding all articles'));
+      .catch(next);
   }
 
   /**
@@ -113,12 +118,13 @@ class ArticleController {
   * @summary: API controller to handle requests
   * to edit an article
   * @param {object} req: request object
-  * @param {object} res: response object
+  * @param {object} res - response object
+  * @param {function} next - for errors
   * @returns {object} api response: article object for
   * successful requests, or error object for
   * requests that fail
   */
-  static editArticle(req, res) {
+  static editArticle(req, res, next) {
     const {
       title, description, body, isPaidFor, price
     } = req.body.article;
@@ -142,16 +148,7 @@ class ArticleController {
         success: true,
         article: result[1]
       }))
-      .catch((err) => {
-        res.status(500).json({
-          errors: {
-            body: [
-              'sorry there was an error updating this article',
-              err
-            ]
-          }
-        });
-      });
+      .catch(next);
   }
 
   /**
@@ -160,25 +157,18 @@ class ArticleController {
 * to delete an article
 * @param {object} req: request object
 * @param {object} res: response object
+* @param {function} next - for errors
 * @returns {object} api response: article object for
 * successful requests, or error object for
 * requests that fail
 */
-  static deleteArticle(req, res) {
+  static deleteArticle(req, res, next) {
     const { slug } = req.params;
     Article.destroy({
       where: { slug }
     })
       .then(() => res.status(204).json())
-      .catch(() => {
-        res.status(500).json({
-          errors: {
-            body: [
-              'sorry there was an error deleting this article',
-            ]
-          }
-        });
-      });
+      .catch(next);
   }
 }
 
