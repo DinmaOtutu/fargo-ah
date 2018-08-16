@@ -88,12 +88,12 @@ class ArticleController {
   static listAllArticles(req, res, next) {
     const { page, limit } = req;
     let offset = null;
+    if (req.query.author || req.query.tag || req.query.title) return next();
 
     if (page || limit) {
       // calculate offset
       offset = limit * (page - 1);
     }
-
     return Article
       .findAll({
         include: [{
