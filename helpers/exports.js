@@ -50,10 +50,8 @@ exports.resendVerificationEmail = async (req, res) => {
 exports.searchByTagAuthorOrTitle = (req, res) => {
   const searchParameters = {};
   // Get every parameter and key passed in the query string
-  const keysAndValues = Object.entries(req.query);
-  // Assign page number as the first page if the page number is not passed
-  let pageNumber = typeof req.query.pageNumber === 'undefined' ? 1 : req.query.pageNumber;
-  let pageSize = typeof req.query.pageSize === 'undefined' ? 10 : req.query.pageSize;
+  const queryObjectKeysAndValues = Object.entries(req.query);
+  let { pageNumber = 1, pageSize = 10 } = req.query;
   pageNumber = parseInt(pageNumber, 10);
   pageSize = parseInt(pageSize, 10);
   if ((pageNumber < 1 || !Number.isInteger(pageNumber)) || pageSize < 10) {
@@ -69,13 +67,19 @@ exports.searchByTagAuthorOrTitle = (req, res) => {
   const offset = (pageNumber - 1) * limit;
   const queryStringValues = Object.values(req.query);
   let textToSearch = queryStringValues[0];
+  textToSearch = textToSearch.toLowerCase();
   textToSearch = trim(escape(textToSearch));
 
   // selects the search value from the key
-  const searchCriteria = keysAndValues[0][0];
+  const searchCriteria = queryObjectKeysAndValues[0][0];
   if (searchCriteria === 'tag') {
     searchParameters.where = {
       [Op.or]: [{ tagList: { [Op.contains]: [textToSearch] } }]
+    };
+  }
+  if (searchCriteria === 'category') {
+    searchParameters.where = {
+      [Op.or]: [{ categorylist: { [Op.contains]: [textToSearch] } }]
     };
   }
   if (searchCriteria === 'title') {
@@ -97,4 +101,12 @@ exports.searchByTagAuthorOrTitle = (req, res) => {
     attributes: ['username'],
   }];
   return searchParameters;
+};
+
+exports.listOfCategories = (req, res) => {
+  const categorieslist = ['people', 'politics', 'science', 'sports', 'culture',
+    'entertainment', 'education', 'movies', 'agriculture', 'aquaculture', 'libral',
+    'fiction', 'cartoon', 'programming', 'it', 'technology', 'business', 'marketing',
+    'african', 'religion', 'festival', 'season', 'european', 'asian', 'american', 'race', 'cars'];
+  return res.status(200).json({ message: 'List of categories', categorieslist });
 };

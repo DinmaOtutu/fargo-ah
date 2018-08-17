@@ -322,6 +322,15 @@ describe('Articles Search by Criteria', () => {
         done();
       });
   });
+  it('Should search for articles by category', (done) => {
+    chai.request(app)
+      .get('/api/articles?category=people')
+      .end((err, res) => {
+        expect(res).to.have.status(200);
+        expect(res.body).to.be.an('object').to.have.property('message').to.equal('These are the articles found');
+        done();
+      });
+  });
   it('Should search for articles by author', (done) => {
     chai.request(app)
       .get('/api/articles?author=Lumexat')
@@ -337,6 +346,19 @@ describe('Articles Search by Criteria', () => {
       .end((err, res) => {
         expect(res).to.have.status(200);
         expect(res.body).to.be.an('object').to.have.property('message').to.equal('No article found for your search');
+        done();
+      });
+  });
+});
+
+describe('Category Controller endpoints', () => {
+  it('Should get the list of all categories', (done) => {
+    chai.request(app)
+      .get('/api/articles/list/categories')
+      .end((err, res) => {
+        expect(res).to.have.status(200);
+        expect(res.body).to.be.an('object').to.have.property('message').to.equal('List of categories');
+        expect(res.body).to.have.property('categorieslist').to.be.an('array').with.length.greaterThan(5);
         done();
       });
   });

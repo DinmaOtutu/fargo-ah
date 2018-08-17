@@ -12,7 +12,7 @@ import { Article, User } from '../models';
 
 const createArticleHelper = (res, articleObject, imageUrl = null) => {
   const {
-    title, description, body, tagList, userId
+    title, description, body, tagList, userId, categorylist
   } = articleObject;
 
   return Article
@@ -23,6 +23,7 @@ const createArticleHelper = (res, articleObject, imageUrl = null) => {
       body,
       userId,
       tagList,
+      categorylist,
       imageUrl,
     })
     .then(article => Article.findById(article.id, {

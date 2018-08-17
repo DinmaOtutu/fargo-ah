@@ -18,13 +18,13 @@ class ArticleController {
   */
   static createArticle(req, res) {
     const {
-      title, description, body, tagList, imageData,
+      title, description, body, tagList, categorylist, imageData,
     } = req.body.article;
 
     const { userId } = req;
 
     const articleObject = {
-      title, description, body, tagList, imageData, userId
+      title, description, body, tagList, categorylist, imageData, userId
     };
     /**
      * check if image was provided in the request
@@ -86,7 +86,7 @@ class ArticleController {
    * @returns {object} - the found article from database or empty if not found
   */
   static listAllArticles(req, res, next) {
-    if (req.query.author || req.query.tag || req.query.title) return next();
+    if (req.query.author || req.query.tag || req.query.title || req.query.category) return next();
     return Article
       .findAll({
         include: [{
