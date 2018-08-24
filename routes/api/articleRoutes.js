@@ -1,5 +1,5 @@
 import { Router } from 'express';
-
+import validatePrice from '../../middlewares/validatePrice';
 import ArticleControllers from '../../controllers/ArticleController';
 import validateArticle from '../../middlewares/validateArticle';
 import verifyToken from '../../middlewares/verifyToken';
@@ -12,9 +12,9 @@ import { checkCount, articleExists } from '../../middlewares/checkUser';
 const router = Router();
 
 
-router.post('/articles', verifyToken, validateArticle, ArticleControllers.createArticle);
+router.post('/articles', verifyToken, validateArticle, validatePrice, ArticleControllers.createArticle);
 
-router.put('/articles/:slug', validateArticle, verifyToken, articleExists, checkCount, ArticleControllers.editArticle);
+router.put('/articles/:slug', validateArticle, validatePrice, verifyToken, articleExists, checkCount, ArticleControllers.editArticle);
 
 router.delete('/articles/:slug', verifyToken, articleExists, ArticleControllers.deleteArticle);
 
