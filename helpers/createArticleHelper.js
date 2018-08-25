@@ -1,6 +1,6 @@
 import generateUniqueSlug from './generateUniqueSlug';
 import { Article, User } from '../models';
-
+import calculateReadTime from './calculateReadTime';
 
 /**
  * @description an helper function to help create article in database
@@ -12,9 +12,9 @@ import { Article, User } from '../models';
 
 const createArticleHelper = (res, articleObject, imageUrl = null) => {
   const {
-    title, description, body, tagList, userId
+    title, description, body, tagList, userId, wordCount
   } = articleObject;
-
+  const readTime = calculateReadTime(wordCount);
   return Article
     .create({
       slug: generateUniqueSlug(title),
@@ -24,6 +24,7 @@ const createArticleHelper = (res, articleObject, imageUrl = null) => {
       userId,
       tagList,
       imageUrl,
+      readTime
     })
     .then(article => Article.findById(article.id, {
       include: [{

@@ -1,6 +1,6 @@
-import chai, { expect } from 'chai';
+import chai, { expect, assert } from 'chai';
 import chaiHttp from 'chai-http';
-
+import countReadTime from '../../helpers/calculateReadTime';
 import app from '../../index';
 import seedData from './seed/seed';
 
@@ -269,5 +269,9 @@ describe('Articles API endpoints', () => {
         expect(res.body.message).to.equal('Article successfully deleted');
         done();
       });
+  });
+  it('Should count how long it takes to read an article', (done) => {
+    assert.equal(countReadTime(460), 2);
+    done();
   });
 });
